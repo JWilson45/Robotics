@@ -69,7 +69,7 @@ public class vehicle2B {
 
         motorLeft.setSpeed(300);
 				motorRight.setSpeed(300);
-        
+
 			} else {
 
         // Limiter on the max speed of the robot
