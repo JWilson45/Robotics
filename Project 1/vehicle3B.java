@@ -10,7 +10,7 @@ import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
-public class vehicle2A {
+public class vehicle3B {
 
 
 	// constants for port numbers
@@ -49,64 +49,59 @@ public class vehicle2A {
 		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.A);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.D);
 
-		// Calibration for the light sensors
-		colorProvider1.fetchSample(colorSample1,0);
-		float baseLeft = colorSample1[0];
 
-		colorProvider4.fetchSample(colorSample4,0);
-		float baseRight = colorSample4[0];
-		
-		float max = 350;
-		
-		float value;
-
-		
-		
 		// main loop - keeps us looking for input
 		while (Button.ESCAPE.isUp()) {
-			
+
 			motorRight.forward();
 			motorLeft.forward();
-
 
 			colorProvider1.fetchSample(colorSample1,0);
 			colorProvider4.fetchSample(colorSample4,0);
 
-
 			System.out.println(colorSample1[0] + "   " + (int)(colorSample1[0]));
 			System.out.println(colorSample4[0] + "   " + (int)(colorSample4[0]));
-			
 
+			// Calculates the proportion for the speed of the motors based on light input
 			int leftSpeed = (int)(motorLeft.getMaxSpeed() * colorSample4[0]);
 			int rightSpeed = (int)(motorRight.getMaxSpeed() * colorSample1[0]);
-			
+
+			// Set the speed of the motors to the calculated proportions
+			// set to variables leftSpeed, rightSpeed
+			// This will pull the robot to the light source
 			motorLeft.setSpeed(leftSpeed + 50);
 			motorRight.setSpeed(rightSpeed + 50);
-			
-			if(colorSample4[0] > 0.5 || colorSample1[0] > 0.5 )
+
+			// Once the robot gets close to the light,
+			// turn away and look for a new light source
+			if(colorSample4[0] > 0.5 || colorSample1[0] > 0.5 ) {
 				robot3b(motorLeft, motorRight);
-			
-		if (leftSpeed > 300) {
-			leftSpeed = 300;
-		}
-		if (rightSpeed > 300) {
-			rightSpeed = 300;
-		}
-			}		
-			}	
-	
-	
-	
-	
+
+				// Speed limiter for rob
+				if (leftSpeed > 300) {
+					leftSpeed = 300;
+				}
+				if (rightSpeed > 300) {
+					rightSpeed = 300;
+				}
+
+			}
+
+
+	}
+
+}
+
+
 	private static void robot3b(RegulatedMotor left, RegulatedMotor right) {
-		
+
 		left.setSpeed(250);
 		right.setSpeed(100);
 		left.forward();
 		right.forward();
 		Delay.msDelay(1000);
-		
-		
+
+
 	}
-	
-	}
+
+}

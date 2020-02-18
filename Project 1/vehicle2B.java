@@ -1,3 +1,4 @@
+
 import lejos.hardware.BrickFinder;
 import lejos.hardware.Button;
 import lejos.hardware.Keys;
@@ -5,11 +6,15 @@ import lejos.hardware.ev3.EV3;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
+import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.hardware.sensor.SensorMode;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
+import lejos.utility.Delay;
+import java.lang.Math;
 
-public class vehicle2B {
+public class vehicle2A {
 
 
 	// constants for port numbers
@@ -48,45 +53,36 @@ public class vehicle2B {
 		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.D);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.A);
 
+		// Calibration for the light sensors
+		colorProvider1.fetchSample(colorSample1,0);
+		float baseSample1 = colorSample1[0];
+
+		colorProvider4.fetchSample(colorSample4,0);
+		float baseSample4 = colorSample4[0];
+
+		motorRight.forward();
+		motorLeft.forward();
 
 		// main loop - keeps us looking for input
 		while (Button.ESCAPE.isUp()) {
-
 			motorRight.forward();
 			motorLeft.forward();
+
 
 			colorProvider1.fetchSample(colorSample1,0);
 			colorProvider4.fetchSample(colorSample4,0);
 
-      // Sensor output on LCD
-			System.out.println(colorSample1[0] + "   " + (int)(max * colorSample1[0]));
 
-      // Calculate proportion used for motor speed based on light input
-			int leftSpeed = (int)(1.5 * motorLeft.getMaxSpeed() * colorSample4[0]);
-			int rightSpeed = (int)(1.5 * motorRight.getMaxSpeed() * colorSample1[0]);
+			System.out.println(colorSample1[0] + "   " + (int)(motorRight.getMaxSpeed() * colorSample1[0]));
 
-			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) || ( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
+			int leftSpeed = (int)(motorLeft.getMaxSpeed() * colorSample4[0] * 2);
+			int rightSpeed = (int)(motorRight.getMaxSpeed() * colorSample1[0] * 2);
 
-        motorLeft.setSpeed(300);
-				motorRight.setSpeed(300);
+			motorRight.setSpeed(rightSpeed);
+			motorLeft.setSpeed(leftSpeed);
 
-			} else {
-
-        // Limiter on the max speed of the robot
-				if (leftSpeed > 300) {
-					leftSpeed = 300;
-				}
-				if (rightSpeed > 300) {
-					rightSpeed = 300;
-				}
-
-        // Set motor speeds based on the proporton of light
- 				motorLeft.setSpeed(leftSpeed);
-				motorRight.setSpeed(rightSpeed);
-			}
 
 		}
-
 
 	}
 

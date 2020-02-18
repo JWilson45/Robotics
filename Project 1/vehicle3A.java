@@ -9,7 +9,7 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 
-public class vehicle2A {
+public class vehicle3A {
 
 
 	// constants for port numbers
@@ -48,20 +48,10 @@ public class vehicle2A {
 		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.A);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.D);
 
-		// Calibration for the light sensors
-		colorProvider1.fetchSample(colorSample1,0);
-		float baseLeft = colorSample1[0];
 
-		colorProvider4.fetchSample(colorSample4,0);
-		float baseRight = colorSample4[0];
-		
-		float max = 350;
-
-		
-		
 		// main loop - keeps us looking for input
 		while (Button.ESCAPE.isUp()) {
-			
+
 			motorRight.forward();
 			motorLeft.forward();
 
@@ -71,27 +61,37 @@ public class vehicle2A {
 
 
 			System.out.println(colorSample1[0] + "   " + (int)(max * colorSample1[0]));
-			
 
+
+			// Calculates the proportion for the speed of the motor based on light input
 			int leftSpeed = (int)(1.5 * motorLeft.getMaxSpeed() * colorSample4[0]);
 			int rightSpeed = (int)(1.5 * motorRight.getMaxSpeed() * colorSample1[0]);
 
-			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) || ( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
-				
+			// if the light is too bright or too dark, hold
+			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) ||
+			( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
+
+				// Hold in place
 				motorRight.setSpeed(0);
 				motorLeft.setSpeed(0);
-				
-			} else {
-				
+
+			}
+
+			// When rob detects light
+			else {
+
+				// Speed cap for rob (cant go too fast just yet)
 				if (leftSpeed > 300) {
 					leftSpeed = 300;
 				}
 				if (rightSpeed > 300) {
 					rightSpeed = 300;
 				}
-				
+
+				// Sets speeds of the motor base on the proportion calculated above
  				motorLeft.setSpeed(leftSpeed);
 				motorRight.setSpeed(rightSpeed);
+
 			}
 		}
 	}
