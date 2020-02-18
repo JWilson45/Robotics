@@ -48,20 +48,10 @@ public class vehicle2A {
 		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.A);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.D);
 
-		// Calibration for the light sensors
-		colorProvider1.fetchSample(colorSample1,0);
-		float baseLeft = colorSample1[0];
 
-		colorProvider4.fetchSample(colorSample4,0);
-		float baseRight = colorSample4[0];
-		
-		float max = 350;
-
-		
-		
 		// main loop - keeps us looking for input
 		while (Button.ESCAPE.isUp()) {
-			
+
 			motorRight.forward();
 			motorLeft.forward();
 
@@ -71,37 +61,32 @@ public class vehicle2A {
 
 
 			System.out.println(colorSample1[0] + "   " + (int)(max * colorSample1[0]));
-			
+
 
 			int leftSpeed = (int)(1.5 * motorLeft.getMaxSpeed() * colorSample4[0]);
 			int rightSpeed = (int)(1.5 * motorRight.getMaxSpeed() * colorSample1[0]);
 
 			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) || ( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
-				
+
 				motorRight.setSpeed(300);
 				motorLeft.setSpeed(300);
-				
+
 			} else {
-				
+
 				if (leftSpeed > 300) {
 					leftSpeed = 300;
 				}
 				if (rightSpeed > 300) {
 					rightSpeed = 300;
 				}
-				
+
  				motorLeft.setSpeed(leftSpeed);
 				motorRight.setSpeed(rightSpeed);
-			}	
-			
-//		if (colorSample1[0] < baseLeft || colorSample4[0] < baseRight) {
-//			motorRight.stop();
-//			motorLeft.stop();
-//			}
-//			else {
-//				motorRight.setSpeed(rightSpeed);
-//				motorLeft.setSpeed(leftSpeed);
-//			}
+			}
+
 		}
+
+
 	}
+	
 }
