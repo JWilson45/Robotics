@@ -9,7 +9,7 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 
-public class vehicle2A {
+public class vehicle2AB {
 
 
 	// constants for port numbers
@@ -68,6 +68,9 @@ public class vehicle2A {
 
 			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) || ( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
 
+				motorLeft.setSpeed(300);
+				motorRight.setSpeed(300);
+				
 			} else {
 
 				if (leftSpeed > 300) {

@@ -9,7 +9,7 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 
-public class vehicle2A {
+public class vehicle2B {
 
 
 	// constants for port numbers
@@ -55,21 +55,24 @@ public class vehicle2A {
 			motorRight.forward();
 			motorLeft.forward();
 
-
 			colorProvider1.fetchSample(colorSample1,0);
 			colorProvider4.fetchSample(colorSample4,0);
 
-
+      // Sensor output on LCD
 			System.out.println(colorSample1[0] + "   " + (int)(max * colorSample1[0]));
 
-
+      // Calculate proportion used for motor speed based on light input
 			int leftSpeed = (int)(1.5 * motorLeft.getMaxSpeed() * colorSample4[0]);
 			int rightSpeed = (int)(1.5 * motorRight.getMaxSpeed() * colorSample1[0]);
 
 			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) || ( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
 
+        motorLeft.setSpeed(300);
+				motorRight.setSpeed(300);
+        
 			} else {
 
+        // Limiter on the max speed of the robot
 				if (leftSpeed > 300) {
 					leftSpeed = 300;
 				}
@@ -77,6 +80,7 @@ public class vehicle2A {
 					rightSpeed = 300;
 				}
 
+        // Set motor speeds based on the proporton of light
  				motorLeft.setSpeed(leftSpeed);
 				motorRight.setSpeed(rightSpeed);
 			}
