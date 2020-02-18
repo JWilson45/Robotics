@@ -68,9 +68,6 @@ public class vehicle2A {
 
 			if (( colorSample4[0] < 0.1 && colorSample1[0] < 0.1 ) || ( colorSample4[0] > 0.7 && colorSample1[0] > 0.7 )) {
 
-				motorRight.setSpeed(300);
-				motorLeft.setSpeed(300);
-
 			} else {
 
 				if (leftSpeed > 300) {
@@ -88,5 +85,5 @@ public class vehicle2A {
 
 
 	}
-	
+
 }
