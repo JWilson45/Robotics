@@ -24,12 +24,15 @@ public class SeeingEye {
 	static float[] wallDistance;
 	static float[] forwardDistance;
 
-	final int topSpeed = 200;
-	float kp;
-	float kd;
-	float ki;
+	final static int topSpeed = 200;
+	final static int distanceFromWall = 30;
 
-	public static void main(String[] args){
+
+	public static void main(String[] args) {
+
+		double kp = 5.0;
+		double kd;
+		double ki;
 
 		// Set up for EV3 , Sensors , Motors
 		EV3 ev3Brick = (EV3) BrickFinder.getLocal();
@@ -76,15 +79,18 @@ public class SeeingEye {
 	//Take in sensor data and compare it to the distance from the wall that we want.
 	//Change motor speed to compensate
 	//kp (gain) is the multiplier of the speed that the change happens
-	public static float returnProportional(float kp) {
+	public static double returnProportional(float kp) {
 
+		double error = distanceFromWall - wallDistance[0];
+
+		return error * kp;
 
 	}
 
 
 	//Produces output that is proportional to the
 	//derivative of the input
-	public static float returnDiriv(float kd) {
+	public static double returnDiriv(float kd) {
 
 
 	}
@@ -95,7 +101,7 @@ public class SeeingEye {
 
 	//System tracks errors, sums them up and once the
 	//total error crosses a threshold, the system corrects
-	public static float returnSumation(float ki) {
+	public static double returnSumation(float ki) {
 
 
 	}
