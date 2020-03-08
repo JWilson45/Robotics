@@ -10,6 +10,7 @@ import lejos.hardware.sensor.NXTUltrasonicSensor;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 import lejos.hardware.ev3.LocalEV3;
+import lejos.utility.Delay;
 
 
 public class SeeingEye {
@@ -18,135 +19,193 @@ public class SeeingEye {
 	final static String SENSOR_PORT_2 = "S2";
 	final static String LEFT_MOTOR    = "LEFT";
 	final static String RIGHT_MOTOR   = "RIGHT";
-	
+
 	final static int topSpeed = 200;
 	final static int distanceFromWall = 30;
+	static double lastError = 0;
+	static double error = 0;
+	static double totalError = 0;
 
 
 	public static void main(String[] args) {
 		float motorSpeed;
-		
-		double kp = 1.9;
-		double kd;
-		double ki;
+
+		double kp = 1.8;
+		double kd = 0;
+		double ki = 0;
 
 
 		// Set up for the UltraSonic Sensors
 		NXTUltrasonicSensor wallSensor = new NXTUltrasonicSensor(LocalEV3.get().getPort(SENSOR_PORT_4));
 		NXTUltrasonicSensor forwardSensor = new NXTUltrasonicSensor(LocalEV3.get().getPort(SENSOR_PORT_2));
 
-		
+
 		// set US sensors to distance mode
 		SampleProvider wallDistanceProvider = wallSensor.getDistanceMode();
 		SampleProvider forwardDistanceProvider = forwardSensor.getDistanceMode();
 
-		
+
 		// Set up the Motors to drive the wheels
 		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.D);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.A);
 
 		while (Button.ESCAPE.isUp()) {
-			
-			spinMotor(RIGHT_MOTOR, motorRight, topSpeed);
-			spinMotor(LEFT_MOTOR, motorLeft, topSpeed);
-			
+
+			// Tuning code
+			if (Button.DOWN.isDown()) {
+				ki -= 0.1;
+				Delay.msDelay(20);
+			}
+			if (Button.UP.isDown()) {
+				ki += 0.1;
+				Delay.msDelay(20);
+			}
+			System.out.println("Iterm = " + kd);
+			//end tuning code
+
+
+			motorRight.setSpeed(topSpeed);
+			motorRight.forward();
+			motorLeft.setSpeed(topSpeed);
+			motorLeft.forward();
+
 			// creates variables to be used while making calculations in the PIDController
 			float leftSensorData = pollLeftSensor(wallDistanceProvider);
 			float frontSensorData = pollFrontSensor(forwardDistanceProvider);
-			
-			motorSpeed = (float) returnProportional(kp, leftSensorData);
-			
+			calculateError(leftSensorData);
+
+			motorSpeed = returnMotorSpeed(kp, ki, kd);
+
 			if(motorSpeed > 0) {
-				spinMotor(RIGHT_MOTOR, motorRight, (int) motorSpeed);
 
-			} 
-			
-			if (motorSpeed < 0 ){
-				spinMotor(LEFT_MOTOR, motorLeft, (int) motorSpeed);
+				motorRight.setSpeed(Math.abs((int) motorSpeed));
+				motorRight.forward();
+
+			} else {
+
+				motorLeft.setSpeed(Math.abs((int) motorSpeed));
+				motorLeft.forward();
+
 			}
-			
-			System.out.println("LSD: " + leftSensorData + "MSPD: " + motorSpeed);			
 
+			//System.out.println("LSD: " + leftSensorData + "MSPD: " + motorSpeed);
 		}
-		
+
 		wallSensor.close();
 		forwardSensor.close();
-		
+
 	}
-	
-	
-	/**
-	 * spinMotor
-	 * 
-	 * @param motorToSpin -- the string name of the left or right motor we want to manipulate
-	 * @param motor -- the created motor object we want to manipulate
-	 * @param motorSpeed -- the motor speed after it has been altered by the PID controller
-	 */
-	public static void spinMotor(String motorToSpin, RegulatedMotor motor, int motorSpeed) {
-		if(motorToSpin == "RIGHT") {
-			motor.setSpeed(Math.abs(motorSpeed));
-			motor.forward();
-		}
-		
-		if(motorToSpin == "LEFT") {
-			motor.setSpeed(Math.abs(motorSpeed));
-			motor.forward();
-		}
-		
-	}
-	
-	
+
+
 	/**
 	 * pollLeftSensor
-	 * 
+	 *
 	 * @param wallDistanceProvider -- the left wallDistanceProvider created outside of the main loop
 	 * @return -- the value(distance) found by the left facing sensor
-	 * 
-	 * we do not create the wallDistanceProvider within this function to avoid creating one every  
+	 *
+	 * we do not create the wallDistanceProvider within this function to avoid creating one every
 	 * time the main loop calls this function
 	 */
 	public static float pollLeftSensor(SampleProvider wallDistanceProvider) {
 		float[] wallDistance;
 		wallDistance = new float[wallDistanceProvider.sampleSize()];
-		wallDistanceProvider.fetchSample(wallDistance, 0);		
-		
+		wallDistanceProvider.fetchSample(wallDistance, 0);
+
 		return wallDistance[0];
 	}
-	
-	
+
+
 	/**
 	 * pollFrontSensor
-	 * 
+	 *
 	 * @param wallDistanceProvider -- the front wallDistanceProvider created outside of the main loop
 	 * @return -- the value(distance) found by the front facing sensor
-	 * 
-	 * we do not create the wallDistanceProvider within this function to avoid creating one every  
+	 *
+	 * we do not create the wallDistanceProvider within this function to avoid creating one every
 	 * time the main loop calls this function
 	 */
 	public static float pollFrontSensor(SampleProvider forwardDistanceProvider) {
 		float[] forwardDistance;
 		forwardDistance = new float[forwardDistanceProvider.sampleSize()];
 		forwardDistanceProvider.fetchSample(forwardDistance, 0);
-		
+
 		return forwardDistance[0];
 	}
-	
+
 
 	/**
-	 * returnProportional
-	 * 
-	 * @param kp -- (gain) is the multiplier of the speed that the change happens
-	 * @param sensorData -- the sensorData used to calculate the error (actualValue)
-	 * @return -- the proportional value used to assist in setting motor speed
-	 * 
-	 * correction is proportional to error using direction and magnitude
+	 *
+	 * @param sensorData
 	 */
-	public static double returnProportional(double kp, Float sensorData) {
+	public static void calculateError(Float sensorData) {
 
 		// Error calculation: excpectedValue - actualValue
-		double error = distanceFromWall - (sensorData * 100);
+		lastError = error;
+		error = distanceFromWall - (sensorData * 100);
+		totalError += error;
 
-		return error * kp;
 	}
+
+
+	/**
+	 *
+	 * @param kp -- value to be multiplied to the proportional term of the PID loop
+	 * @param ki -- value to be multiplied to the Integral term of the PID loop
+	 * @param kd -- value to be multiplied to the Derivative calculation of the PID loop
+	 * @return
+	 */
+	public static float returnMotorSpeed(double kp, double ki, double kd) {
+		double proportional = error * kp;
+		double integral = totalError * ki;
+		double derivative = (lastError - error) * ki;
+
+		double pidOutput = proportional; //+ integral;
+
+		return (float) pidOutput;
+
+	}
+
+//	/**
+//	 * spinMotor
+//	 *
+//	 * @param motorToSpin -- the string name of the left or right motor we want to manipulate
+//	 * @param motor -- the created motor object we want to manipulate
+//	 * @param motorSpeed -- the motor speed after it has been altered by the PID controller
+//	 */
+//	public static void spinMotor(String motorToSpin, RegulatedMotor motor, int motorSpeed) {
+//		if(motorToSpin == "RIGHT") {
+//			motor.setSpeed(Math.abs(motorSpeed));
+//			motor.forward();
+//		}
+//
+//		if(motorToSpin == "LEFT") {
+//			motor.setSpeed(Math.abs(motorSpeed));
+//			motor.forward();
+//		}
+//
+//	}
+
+//	/**
+//	 * returnProportional
+//	 *
+//	 * @param kp -- (gain) is the multiplier of the speed that the change happens
+//	 * @param sensorData -- the sensorData used to calculate the error (actualValue)
+//	 * @return -- the proportional value used to assist in setting motor speed
+//	 *
+//	 * correction is proportional to error using direction and magnitude
+//	 */
+
+//	public static double returnProportional(double kp) {
+//		return error * kp;
+//	}
+//	/**
+//	 *
+//	 * @param ki
+//	 * @param sensorData
+//	 * @return
+//	 */
+//	public static double returnDerivative(double ki) {
+//		return lastError - error * ki;
+//	}
 
 }
