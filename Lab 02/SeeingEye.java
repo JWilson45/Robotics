@@ -30,9 +30,9 @@ public class SeeingEye {
 	public static void main(String[] args) {
 		int motorSpeed;
 
-		double kp = 5.6;
-		double kd = 0;
-		double ki = 0.9;
+		double kp = 12.0;
+		double kd = 2.5;
+		double ki = 0.8;
 
 
 		// Set up for the UltraSonic Sensors
@@ -61,27 +61,27 @@ public class SeeingEye {
 				Delay.msDelay(1000);
 
 				while (Button.ENTER.isUp()) {
-
 					if (Button.DOWN.isDown()) {
-						kd -= 0.1;
+						ki -= 1;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kd);
+						System.out.println("Pterm = " + ki);
 					}
 					if (Button.LEFT.isDown()) {
-						kd -= 0.01;
+						ki -= .1;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kd);
+						System.out.println("Pterm = " + ki);
 					}
 					if (Button.RIGHT.isDown()) {
-						kd += 0.01;
+						ki += .1;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kd);
+						System.out.println("Pterm = " + ki);
 					}
 					if (Button.UP.isDown()) {
-						kd += 0.1;
+						ki += 1;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kd);
+						System.out.println("Pterm = " + ki);
 					}
+
 				}
 				Delay.msDelay(1000);
 			}
@@ -93,7 +93,6 @@ public class SeeingEye {
 			calculateError(leftSensorData);
 			//System.out.println("Iterm = " + ki + "//" + error);//leftSensorData);
 			//System.out.println("TotalE: " + totalError);
-
 			motorSpeed = returnMotorSpeed(kp, ki, kd);
 
 			//System.out.println("SDP: " + motorSpeed);
@@ -101,21 +100,23 @@ public class SeeingEye {
 //			motorLeft.setSpeed(topSpeed);
 //			motorRight.setSpeed(topSpeed);
 
-			if(motorSpeed > 0) {
+			if(motorSpeed > .2) {
 				motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
-			} else if (motorSpeed < 0){
+			} else if (motorSpeed < - .2){
 				motorRight.setSpeed(Math.abs(motorSpeed) + topSpeed);
+			} else {
+				motorLeft.setSpeed(topSpeed);
+				motorRight.setSpeed(topSpeed);
 			}
 
-			if((frontSensorData * 100 < 40))
-					motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
+			//if((frontSensorData * 100 < 40))
+			//		motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
 
 			motorRight.forward();
 			motorLeft.forward();
 
 			//System.out.println("LSD: " + leftSensorData + "MSPD: " + motorSpeed);
 		}
-
 		wallSensor.close();
 		forwardSensor.close();
 		motorRight.close();
@@ -169,19 +170,19 @@ public class SeeingEye {
 
 		System.out.println((int)error);
 
-//		if (totalError > 300) {
-//			totalError = 300;
-//		}
-//		else if (totalError < -300){
-//			totalError = -300;
-//		}
-
 		if(totalError > 0 && error < 0)
 			totalError = 0;
+
 		if(totalError < 0 && error > 0)
 			totalError = 0;
+
 		if(error < 60 || error > -60)
 			totalError += error;
+
+		if(totalError == 100)
+			totalError = 100;
+		if(totalError == -100)
+			totalError = -100;
 	}
 
 	/**
@@ -194,7 +195,7 @@ public class SeeingEye {
 	public static int returnMotorSpeed(double kp, double ki, double kd) {
 		double proportional = error * kp;
 		double integral = totalError * ki;
-		double derivative = (lastError - error) * kd;
+		double derivative = (error - lastError ) * kd;
 
 		double pidOutput = proportional + integral + derivative;
 
