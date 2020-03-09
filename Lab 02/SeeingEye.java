@@ -20,7 +20,7 @@ public class SeeingEye {
 	final static String LEFT_MOTOR    = "LEFT";
 	final static String RIGHT_MOTOR   = "RIGHT";
 
-	final static int topSpeed = 200;
+	final static int topSpeed = 250;
 	final static int distanceFromWall = 30;
 	static double lastError = 0;
 	static double error = 0;
@@ -28,9 +28,9 @@ public class SeeingEye {
 
 
 	public static void main(String[] args) {
-		float motorSpeed;
+		int motorSpeed;
 
-		double kp = 1.8;
+		double kp = 5.6;
 		double kd = 0;
 		double ki = 0;
 
@@ -48,54 +48,76 @@ public class SeeingEye {
 		// Set up the Motors to drive the wheels
 		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.D);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.A);
+		//motorLeft.setSpeed(topSpeed);
+		//motorRight.setSpeed(topSpeed);
 
 		while (Button.ESCAPE.isUp()) {
 
 			// Tuning code
-			if (Button.DOWN.isDown()) {
-				ki -= 0.1;
-				Delay.msDelay(20);
+			if (Button.ENTER.isDown()) {
+				motorLeft.stop();
+				motorRight.stop();
+
+				Delay.msDelay(1000);
+
+				while (Button.ENTER.isUp()) {
+
+					if (Button.DOWN.isDown()) {
+						kp -= 0.1;
+						Delay.msDelay(200);
+						System.out.println("Pterm = " + kp);
+					}
+					if (Button.LEFT.isDown()) {
+						kp -= 0.01;
+						Delay.msDelay(200);
+						System.out.println("Pterm = " + kp);
+					}
+					if (Button.RIGHT.isDown()) {
+						kp += 0.01;
+						Delay.msDelay(200);
+						System.out.println("Pterm = " + kp);
+					}
+					if (Button.UP.isDown()) {
+						kp += 0.1;
+						Delay.msDelay(200);
+						System.out.println("Pterm = " + kp);
+					}
+				}
+				Delay.msDelay(1000);
 			}
-			if (Button.UP.isDown()) {
-				ki += 0.1;
-				Delay.msDelay(20);
-			}
-			System.out.println("Iterm = " + kd);
 			//end tuning code
-
-
-			motorRight.setSpeed(topSpeed);
-			motorRight.forward();
-			motorLeft.setSpeed(topSpeed);
-			motorLeft.forward();
 
 			// creates variables to be used while making calculations in the PIDController
 			float leftSensorData = pollLeftSensor(wallDistanceProvider);
 			float frontSensorData = pollFrontSensor(forwardDistanceProvider);
 			calculateError(leftSensorData);
+			//System.out.println("Iterm = " + ki + "//" + error);//leftSensorData);
+			//System.out.println("TotalE: " + totalError);
 
 			motorSpeed = returnMotorSpeed(kp, ki, kd);
 
+			//System.out.println("SDP: " + motorSpeed);
+
+			motorLeft.setSpeed(topSpeed);
+			motorRight.setSpeed(topSpeed);
+
 			if(motorSpeed > 0) {
-
-				motorRight.setSpeed(Math.abs((int) motorSpeed));
-				motorRight.forward();
-
+				motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
 			} else {
-
-				motorLeft.setSpeed(Math.abs((int) motorSpeed));
-				motorLeft.forward();
-
+				motorRight.setSpeed(Math.abs(motorSpeed) + topSpeed);
 			}
+			motorRight.forward();
+			motorLeft.forward();
 
 			//System.out.println("LSD: " + leftSensorData + "MSPD: " + motorSpeed);
 		}
 
 		wallSensor.close();
 		forwardSensor.close();
+		motorRight.close();
+		motorLeft.close();
 
 	}
-
 
 	/**
 	 * pollLeftSensor
@@ -114,7 +136,6 @@ public class SeeingEye {
 		return wallDistance[0];
 	}
 
-
 	/**
 	 * pollFrontSensor
 	 *
@@ -128,7 +149,6 @@ public class SeeingEye {
 		float[] forwardDistance;
 		forwardDistance = new float[forwardDistanceProvider.sampleSize()];
 		forwardDistanceProvider.fetchSample(forwardDistance, 0);
-
 		return forwardDistance[0];
 	}
 
@@ -142,10 +162,23 @@ public class SeeingEye {
 		// Error calculation: excpectedValue - actualValue
 		lastError = error;
 		error = distanceFromWall - (sensorData * 100);
+
+
+		System.out.println((int)error);
+		if (totalError > 300) {
+			totalError = 300;
+		}
+		else if (totalError < -300){
+			totalError = -300;
+		}
+
+		if(totalError > 0 && error < 0)
+			totalError = 0;
+		if(totalError < 0 && error > 0)
+			totalError = 0;
 		totalError += error;
 
 	}
-
 
 	/**
 	 *
@@ -154,14 +187,14 @@ public class SeeingEye {
 	 * @param kd -- value to be multiplied to the Derivative calculation of the PID loop
 	 * @return
 	 */
-	public static float returnMotorSpeed(double kp, double ki, double kd) {
+	public static int returnMotorSpeed(double kp, double ki, double kd) {
 		double proportional = error * kp;
 		double integral = totalError * ki;
-		double derivative = (lastError - error) * ki;
+		double derivative = (lastError - error) * kd;
 
-		double pidOutput = proportional; //+ integral;
+		double pidOutput = proportional + integral + derivative;
 
-		return (float) pidOutput;
+		return (int)pidOutput;
 
 	}
 
