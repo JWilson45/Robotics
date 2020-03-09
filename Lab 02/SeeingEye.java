@@ -32,7 +32,7 @@ public class SeeingEye {
 
 		double kp = 5.6;
 		double kd = 0;
-		double ki = 0;
+		double ki = 0.9;
 
 
 		// Set up for the UltraSonic Sensors
@@ -46,7 +46,7 @@ public class SeeingEye {
 
 
 		// Set up the Motors to drive the wheels
-		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.D);
+		RegulatedMotor motorRight = new EV3LargeRegulatedMotor(MotorPort.B);
 		RegulatedMotor motorLeft = new EV3LargeRegulatedMotor(MotorPort.A);
 		//motorLeft.setSpeed(topSpeed);
 		//motorRight.setSpeed(topSpeed);
@@ -63,24 +63,24 @@ public class SeeingEye {
 				while (Button.ENTER.isUp()) {
 
 					if (Button.DOWN.isDown()) {
-						kp -= 0.1;
+						kd -= 0.1;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kp);
+						System.out.println("Pterm = " + kd);
 					}
 					if (Button.LEFT.isDown()) {
-						kp -= 0.01;
+						kd -= 0.01;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kp);
+						System.out.println("Pterm = " + kd);
 					}
 					if (Button.RIGHT.isDown()) {
-						kp += 0.01;
+						kd += 0.01;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kp);
+						System.out.println("Pterm = " + kd);
 					}
 					if (Button.UP.isDown()) {
-						kp += 0.1;
+						kd += 0.1;
 						Delay.msDelay(200);
-						System.out.println("Pterm = " + kp);
+						System.out.println("Pterm = " + kd);
 					}
 				}
 				Delay.msDelay(1000);
@@ -98,14 +98,18 @@ public class SeeingEye {
 
 			//System.out.println("SDP: " + motorSpeed);
 
-			motorLeft.setSpeed(topSpeed);
-			motorRight.setSpeed(topSpeed);
+//			motorLeft.setSpeed(topSpeed);
+//			motorRight.setSpeed(topSpeed);
 
 			if(motorSpeed > 0) {
 				motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
-			} else {
+			} else if (motorSpeed < 0){
 				motorRight.setSpeed(Math.abs(motorSpeed) + topSpeed);
 			}
+
+			if((frontSensorData * 100 < 40))
+					motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
+
 			motorRight.forward();
 			motorLeft.forward();
 
@@ -163,21 +167,21 @@ public class SeeingEye {
 		lastError = error;
 		error = distanceFromWall - (sensorData * 100);
 
-
 		System.out.println((int)error);
-		if (totalError > 300) {
-			totalError = 300;
-		}
-		else if (totalError < -300){
-			totalError = -300;
-		}
+
+//		if (totalError > 300) {
+//			totalError = 300;
+//		}
+//		else if (totalError < -300){
+//			totalError = -300;
+//		}
 
 		if(totalError > 0 && error < 0)
 			totalError = 0;
 		if(totalError < 0 && error > 0)
 			totalError = 0;
-		totalError += error;
-
+		if(error < 60 || error > -60)
+			totalError += error;
 	}
 
 	/**
