@@ -30,9 +30,9 @@ public class SeeingEye {
 	public static void main(String[] args) {
 		int motorSpeed;
 
-		double kp = 12.0;
-		double kd = 2.5;
-		double ki = 0.8;
+		double kp = 9.0;//30
+		double kd = 4.6;//3.6
+		double ki = 1;// .4
 
 
 		// Set up for the UltraSonic Sensors
@@ -91,15 +91,12 @@ public class SeeingEye {
 			float leftSensorData = pollLeftSensor(wallDistanceProvider);
 			float frontSensorData = pollFrontSensor(forwardDistanceProvider);
 			calculateError(leftSensorData);
-			//System.out.println("Iterm = " + ki + "//" + error);//leftSensorData);
-			//System.out.println("TotalE: " + totalError);
+
+			// Get the motor speed from the pid loop
 			motorSpeed = returnMotorSpeed(kp, ki, kd);
 
-			//System.out.println("SDP: " + motorSpeed);
 
-//			motorLeft.setSpeed(topSpeed);
-//			motorRight.setSpeed(topSpeed);
-
+			// Set the motor speed
 			if(motorSpeed > .2) {
 				motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
 			} else if (motorSpeed < - .2){
@@ -109,14 +106,30 @@ public class SeeingEye {
 				motorRight.setSpeed(topSpeed);
 			}
 
-			//if((frontSensorData * 100 < 40))
-			//		motorLeft.setSpeed(Math.abs(motorSpeed) + topSpeed);
 
+			// Reverse code that broke our project for the demo due to the broken forward facing sensor
+//			if(frontSensorData * 100 < 21)
+//			{
+//				motorLeft.setSpeed(-200);
+//				motorRight.setSpeed(-200);
+//				motorRight.backward();
+//				motorLeft.backward();
+//				Delay.msDelay(3000);
+//				motorLeft.setSpeed(300);
+//				motorRight.setSpeed(100);
+//				motorRight.forward();
+//				motorLeft.forward();
+//				Delay.msDelay(3500);
+//
+//			}
+
+			// apply changes to motors
+			System.out.println(leftSensorData *100);
 			motorRight.forward();
 			motorLeft.forward();
-
-			//System.out.println("LSD: " + leftSensorData + "MSPD: " + motorSpeed);
 		}
+
+		// Close sensors
 		wallSensor.close();
 		forwardSensor.close();
 		motorRight.close();
@@ -159,6 +172,7 @@ public class SeeingEye {
 
 
 	/**
+	 * Calculates the error and total error for PID calculation
 	 *
 	 * @param sensorData
 	 */
@@ -168,7 +182,7 @@ public class SeeingEye {
 		lastError = error;
 		error = distanceFromWall - (sensorData * 100);
 
-		System.out.println((int)error);
+		//System.out.println((int)error);
 
 		if(totalError > 0 && error < 0)
 			totalError = 0;
@@ -186,64 +200,22 @@ public class SeeingEye {
 	}
 
 	/**
+	 * PID Loop method
 	 *
 	 * @param kp -- value to be multiplied to the proportional term of the PID loop
 	 * @param ki -- value to be multiplied to the Integral term of the PID loop
 	 * @param kd -- value to be multiplied to the Derivative calculation of the PID loop
-	 * @return
+	 * @return output of the pidloop
 	 */
 	public static int returnMotorSpeed(double kp, double ki, double kd) {
-		double proportional = error * kp;
-		double integral = totalError * ki;
-		double derivative = (error - lastError ) * kd;
+		double proportional = error * kp;				// P
+		double integral = totalError * ki;				// I
+		double derivative = (error - lastError ) * kd;	// D
 
-		double pidOutput = proportional + integral + derivative;
+		double pidOutput = proportional + integral + derivative; // add the calculations together
 
 		return (int)pidOutput;
 
 	}
-
-//	/**
-//	 * spinMotor
-//	 *
-//	 * @param motorToSpin -- the string name of the left or right motor we want to manipulate
-//	 * @param motor -- the created motor object we want to manipulate
-//	 * @param motorSpeed -- the motor speed after it has been altered by the PID controller
-//	 */
-//	public static void spinMotor(String motorToSpin, RegulatedMotor motor, int motorSpeed) {
-//		if(motorToSpin == "RIGHT") {
-//			motor.setSpeed(Math.abs(motorSpeed));
-//			motor.forward();
-//		}
-//
-//		if(motorToSpin == "LEFT") {
-//			motor.setSpeed(Math.abs(motorSpeed));
-//			motor.forward();
-//		}
-//
-//	}
-
-//	/**
-//	 * returnProportional
-//	 *
-//	 * @param kp -- (gain) is the multiplier of the speed that the change happens
-//	 * @param sensorData -- the sensorData used to calculate the error (actualValue)
-//	 * @return -- the proportional value used to assist in setting motor speed
-//	 *
-//	 * correction is proportional to error using direction and magnitude
-//	 */
-
-//	public static double returnProportional(double kp) {
-//		return error * kp;
-//	}
-//	/**
-//	 *
-//	 * @param ki
-//	 * @param sensorData
-//	 * @return
-//	 */
-//	public static double returnDerivative(double ki) {
-//		return lastError - error * ki;
-//	}
 
 }
