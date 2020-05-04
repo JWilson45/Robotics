@@ -1,0 +1,819 @@
+ Control Architecture   
+    ~ System Decomposition
+        - components
+            + May be irreducible or
+            + may conntain subsystems
+        - Decomposition
+            + The division of a system into its components and linkages
+            + Hierarchical 
+
+    ~ System Architecture - the fundamental properties, and the patterns of relationships, connections,
+        constraints, and linkages among the components and between the sustem and its environment are 
+        know collectively as the architeture of the System
+
+    ~ System Organization - A system organization represents a particular method or implementation of
+        an Architecture
+
+    ~ Architecture vs. Organization
+        - Architecture is fundamental to the meaning and value of a system
+        - Organization is one of possibly many combinations of components and linkages that meets
+            the requirements of the architecture
+
+    ~ Robotic Architectures - provides a setof principles for organizing control subsystems 
+        - Supplies structure
+        - Imposes constraints on solutions leading to higher levels of uniformity
+                + You will see examples of this such as whether or not a particular architecture allows
+                    the robot to maintain internal state
+
+    ~ Primitives - used to contrast the paradigms using SENSE, PLAN, and ACT primitives. Doing so 
+        can illustrate differences in methods
+        - Sense: Robot senses the world
+        - Plan: Plan the next course of action
+        - Act: Do the thing, translate plan into action
+
+    - Goal of Robotic Architectures
+        - Overall system control requires an approach that can properly handle the complexity of the 
+            system goals while dealing with poorly defined tasks and the existence of unplanned and 
+            unexpected events
+
+    ~ Deliberative Control 
+        - Also called Hierarchical or Model Based
+        - Hierarchical Nature: decompose control process by function
+        - Global internal Model 
+            + A priori knowledge -> Knowledge from theoretical deduction rather than observation or experience
+        - Deliberative robots spend a lot of time thinking, because you must first sense, then wait to collect 
+            sensor data.  Then you must compute the sensor and decide how to react based upon your plan. Then you
+            must carry out the action and hope nothing in the world has changed since you started
+        - Deliberative Control Issues
+            + Complex Sensors required to create accurate Model
+            + Time cost to proceess input to give accurate representation of the world is higher
+            + Complexity of models adds to computation time
+            + Robot can not react quick and must stop and adjust
+            + Encourages open loop control  
+                - In order to prevent stopping, course data is often chosen and the internal model is not always or 
+                    not completely consulted
+            + Systems using this approach assume the environment is static and will not change 
+                - this is another attempt to manage the maount of time required to plan.  A static environment
+                    means that much of the assumptions about the model can be reused
+
+        - STRIPS algorithm - an early attempt to control the time related to Deliberative Control was the STRIPS algorithm
+            + Stanford Research Institute Problem Solver
+            + An implementation of Deliberative control (organization)
+            + Represented the world using logical formulas
+            + composed of:
+                - an initial state
+                - the specification of the goal states
+                - a set of actions with preconditions/postconditions
+
+    ~ Reactive Control - also called Vertical Control (for common stacking of rules/behaviors)
+        - Sometimes confused with behavioral Control (although behavioral control is an implementationof reactive)
+        - ACT <--> SENSE (bidirectional)
+        - Based on a tight connection between the robots sensors and effectors
+        - Purely reactive systems do not use internal representations of the environment and use minimal, if any, state information
+        - Similar to reflexes
+        - Reactive systems consist of a SET OF SITUATIONS (stimuli/conditions) and actions (responses/behaviors)
+        - Situations may be based on sensory input or state: "see" a wall or battery level is low
+        - Reactive Rules:
+            + They may be simple or more complex involving arbitrary combinations of sensor and state input
+            + IDEAL SITUATION is to have a UNIQUE ACTION FOR EACH POSSIBLE STATE (mutually exclusive)
+                - this becomes harder as statespace grows, eventually becoming untraceable
+            + COMMON SITUATION is that designer INDENTIFIES INPORTANT SITUATIONS and WRITES RULES for thos and voers the rest with 
+                default responses
+
+    ~ Subsumption
+        - consists of a number of reactive modules arranged in a hieracrcyhy
+            + directly map sensatin to action
+        - Different layers take care of different behaviors
+        - Lower layers control the most basic functions while higher one's control more advance functions
+
+        - Subsume and Assumption 
+            + Assumption is higher because level layers can assume the functionality of lower ones and the ability to use it to
+                accomplish their own goals
+            + Subsume because higher level layers can inhibit lower level ones when necessary to achieve the overall goal as 
+                known to that layer
+            + The knowledge that a lower level function exists and the ability to user or inhibit it enable the higher level
+                function to complete its own task
+            + State
+                - There is NO STATE maintained within layers, ONLY READINGS AND COMPUTATION ON THE READINGS.
+                - "The world is it's own best model"
+                - State is provided through sensing and not an internal representation
+
+        - Levels of Compentence 
+            - Informal specification of a class of behaviors for a robot over all environments it will encounter
+            - Meant to be a guide, levels may include:
+                + 0: move around the world
+                + 1: find an IR signal
+                + 2: avoid objects
+                + 3: Determine orientation and location
+            - YOU must order the levels correctly! Higher levels might prevent lower level action
+
+        - Methods of Inhibiting (Subsume)
+            + Higher level wander may inhibit the lower level, avoided in 2 ways
+                - the inputs of a layer may be suppressed
+                    + module receives no sensory inputs so it computes no reactions
+                - the outputs of a layer or module may be suppressed
+                    + module receives sensor data, makes computation, but can not move actuators
+                - Higher level functions can only inhibit the function directly below
+                    + Controls complexity
+                    + Good system design -> modules are effective subsystems that are decomposed well and can be readily understood
+                
+    ~ Behavioral Approach
+        - Extension and implementationof reactive approach
+        - Behavior based systems do not include a deliverative components
+        - Behaviors DO NOT HAVE TO BE HIERARCHICAL as they are in subsumption.  There is more flexibility in the design of the
+            architecture
+        - Usually multiple behaviors may share the same underlying component behaviors
+
+        - Behavioral Approach (state)
+            + Individual behaviors can maintain state information (subsumption does not allow this)
+            + State is liimited to the understanding behaviors can determine from the output of sensors and other behaviors
+            + A behavior that identifies walls as being at a particular
+                x,y location, run for direction in a length may be used
+                by a mapping behavior
+            ● The mapping behavior might identify each wall and
+                combine them to form a “map” [Mataric, 198]
+            ● Internal state must not be centralized
+            ● State complexity must allow the behavior to act on the
+                same time scale as the rest of the system.
+            ● Maintaining state is not required
+
+            + Combining Behaviors
+                ● There is a general “action selection” process to
+                    combine the actions commanded by individual
+                    behaviors.
+                ● This action selection process is one of the reasons that
+                    behavior based systems differ from subsumption ones.
+                    This process can can be quiet complex
+                ● 2 types of selection
+                    ● Fixed priority hierarchy
+                    ● Dynamic hierarchy 
+
+            + Behavioral Issues
+                ● Lack of complex internal models limit to simple tasks
+                ● Author of tRP treats behavioral control as a separate
+                    architecture instead of an evolved reactive control
+                ● With time, they were generally categorized together
+                    as the state maintained in behavioral control is not
+                    complex, as another organization of reactive like
+                    subsumption
+                ● All forms of reactive architecture (reactive,
+                    subsumption, behavioral) can be used in our next
+                    architecture, hybrid.
+
+            + Emergent Behavior
+                ● The idea that rules or behaviors can interact to
+                    produce more complex outputs
+                ● Appears do more than the robot was supposed to do
+                ● Example:
+                    ● Robot with 2 touch “whiskers” on the right and the
+                        left
+                        ● If left whisker touch detected turn right 15 degrees
+                        ● If right whisker touch detected turn left 15 degrees
+                        ● Put the robot in a hallway.. It will appear as if t has a travel
+                            hallway behavior.
+                ● It is structured behavior (patterned and meaningful)
+                    that is apparent to the observer but not programmed
+                    in the controller.
+                ● Emergent behavior can be good or bad in nature
+                    (desired or not)
+                ● Because reactive system employ parallel rules and
+                    behaviors that interact with each other and the
+                    environment, they are the perfect foundation for
+                    emergent behavior.
+
+        ~ Hybrid Control
+            ● Also called 3-Layer architecture
+            ● Idea is to combine reactive and deliberative and get
+                the best of both worlds
+            ● Behavior / Reactive based control provides low level
+                control. And a model based planner coordinated the
+                robots actions at a higher, abstract level.
+            ● Common in many robotics applications today
+            
+            - Hybrid Layers    
+                Generally consists of three components
+                    1. A reactive layer
+                    2. A planner
+                    3. A layer that links the 2 together. [Integration layer]
+                ● Main challenge is to archive compromise between the
+                    deliberative and reactive parts of the system.
+
+                + Breaking the Layers Down (Henry II Hybrid Model)
+                    - Deliberative:
+                        1. Receives sensor input sent from lower behavior layer through the middle 
+                            integration later
+                        2. Receives perceived location of robot from starting point (0,0) based on wheel encoder
+                            output and compass data
+                        3. Uses sensor data to create a 2D map by combining starting point and distance/magnitude of
+                            ultrasonic and IR sensor (sensor fusion)
+                        4. Compares new readings with existing data to adjust for error, position robot in existing map
+                        5. Translates goal location in existing map to list of waypoints and sends them to the lower 
+                            behavioral level one at a Time
+                    - Integration
+                        1. Maintains current location in x,y cartesian space 
+                        2. Maintains current state of the robot
+                            a. Roaming
+                            b. Traveling
+                            c. At Destination
+                            d. Waiting
+                        3. Maintains current goal of the robot in (x,y)
+                    - Behavioral 
+                        1. Moves the robot forward
+                        2. Turns the robot
+                        3. Takes sensor readings 
+                        4. Determines robot speed and directions based on inputs:
+                            a. Current goal state from integration
+                            b. Current sensor reading (obsticles)
+                            c. Current sensor readings (internal position: compass, wheel encoders)  
+
+            - Hybrid State
+                ● Unlike reactive systems, hybrid systems can have an
+                    internal model
+                ● It is part of the deliberative layer 
+
+        ~ Probabalistic Control
+            ● The biggest challenge in robotics is being able to
+                accommodate the enormous uncertainty that exists in
+                the physical world.
+            ● Relatively recent approach to solving robotics
+                problems.
+            ● The key idea is the use of representing uncertainty
+                using the calculus of probability theory.
+            ● Probabilistic algorithms represent information by
+                probability distributions over a whole space of
+                guesses
+
+            - Uncertainty Factors
+                Factors that contribute to uncertainty:
+                    1. Environment
+                    2. Sensors
+                        ● Limited in perception
+                        ● Noise (error)
+                        ● Can break
+                    3. Actuation
+                        ● Physical motors can be unpredictable
+                    4. Software
+                        ● All internal models of the world are approximate!
+                            ● Models are abstractions of the real world (even
+                            our own, that our brains create)
+                        ● Algorithmic approximations
+                            ● Robots are real time systems
+                                ● This limits the amount of time that can be spent
+                                    on computation
+                            ● Achieve timely response through sacrifice of
+                                accuracy. 
+            
+            - Probabalistic: The Good
+                ● Robust algorithms that can deal well with limitations
+                    of the sensors and model
+                ● Require less sensor and model complexity
+                ● Scales well in real world environments (can deal better
+                    with the unexpected)
+                ● Very good at localization and mapping (think
+                    autonomous vehicles) 
+
+            - Probabalistic: The bad
+                ● Computational complexity
+                ● They need to consider entire probability densities
+                    instead of a single guess.
+                ● Need to approximate: Most robot (real) worlds are
+                    continuous
+                ● Computing exact posterior distributions (the
+                    probability distribution of an unknown quantity
+                    (random events)) tends to be computationally
+                    intractable  
+                ● Attempts to address issues:
+                    ● Hardware improvements
+                    ● Recent research has successfully increased the
+                        efficiency of some algorithms.     
+
+            - Great reading 
+                Sebastian Thrun is a well known researcher in
+                    Probabilistic Robotics
+                ● He has a major book Probabilistic Robotics
+                ● His 2000 paper Probabilistic Algorithms in Robotics
+                    is a great starting point
+                ● He led the Stanford team that created Stanley, the
+                    first vehicle to complete the DARPA grand challenge
+                ● Founded Google X and Google’s self driving team.
+                ● He is also chairman and co-founder of Udacity
+
+7.1 Localization
+    ~ Getting Started
+        Localization is a problem related to Navigation
+        In order to navigate (find your way) in an environment,
+            you first must know where your are (localization)
+        There are 4 factors that must be understood for
+            Navigation, localization is the most researched:
+        1. Perception
+        2. Localization
+        3. Cognition
+        4. Motion control
+
+    ~ Localization
+        ● Localization is the process of figuring out where the
+            robot is relative to a model of the environment
+
+            ● As the robot keeps moving the estimate of it’s
+                position drifts and changes and must be kept updated
+            ● Localization implies more than knowing one’s absolute
+                position, it may also include understanding position
+                relative to other objects
+                Robots start life lost in space. Until we figure out a way
+                    to tell them where they are
+
+            What about GPS! (global positioning system)
+                ● will not help us???
+                ● Commonly 2 meters and up to 10 meters of error!
+                ● Will not work indoors reliably or at all!
+
+            What other localization technologies can we use?
+
+            What sensors both exteroceptive and proprioceptive, do
+            you think we might be able to use to get position
+            information for a robot?
+
+        ● Robot Sensors for Localization
+            ● Exteroceptive
+                ● GPS (Outdoors only, not alone)
+                ● Compass
+                ● Ultrasonic / Lidar / IR
+                ● Optical / Video
+            ● Proprioceptive
+                ● Accelerometer
+                ● Gyroscope
+                ● Wheel Encoder
+
+        ● Odometry or Path Integration: Robot measures the
+          distance
+            ● Keeps track relative to starting point
+            ● Mobile robots commonly use wheel encoders
+            ● Wheel encoders have n ‘ticks’ per rotation
+            ● Inaccuracy grows with distance traveled
+            ● Compass / gyro / accelerometer commonly used
+                to verify odometry
+
+        ● Localization Error Sources
+            ● Sensor Noise
+                ● Reduces the useful information content of sensor
+                    readings
+                ● One solution is to take multiple sensor readings into
+                    account using fusion of sensor data to increase the
+                    amount of data we have to work with.
+            ● Senor Aliasing
+                ● Sensors can yield little information content
+                ● Sensor readings can often be non-unique
+                ● 2 distance readings taken in different directions
+                    both yield the same reading from 2 different walls.
+                ● Additional information such as hardness, color,
+                    texture may not be available to the robots sensors
+                    to help differentiate surfaces.
+            ● Effector Noise
+                ● Effectors introduce uncertainty about future state
+                ● Slipping and unexpected sources of inaccuracy (picking
+                    up or pushish the robot)
+                ● All of these (Sensor noise, sensor aliasing, effector noise)
+                    lead to increase in error
+
+            ● Kinematic Error ( Manipulator vs Mobile)
+                ● With manipulator robotics determining kinematics is
+                    largely deterministic in nature, we can control the
+                    position of each of the joints to achieve result
+
+                    ● Deterministic (systematic): can be eliminated by
+                        proper calibration of the system
+                    ● Non deterministic: Random errors
+
+                ● Determining mobile robot kinematics is inherently non
+                    deterministic in nature, much of the error originating
+                    from outside forces 
+
+            ● Types of Error
+                ● Range error: sum of wheel movements
+                ● Turn error: difference of wheel movements
+                ● Drift error: difference in the error of the wheels leads
+                    to an error in angular orientation
+                ● Turn and Drift error outweigh range errors as they are
+                    nonlinear in nature
+
+            ● Movement != position
+                ● Knowing just the amount of rotations of both wheels
+                    is not enough to position the robot!
+                ● Either position in the diagram below could be achieved
+                    with the same amount of wheel movement.
+                ● Frequent samples are key!
+
+            - How to Localize 
+            ● A robot’s pose (position) in 2D (plane) space is
+                represented by the vector it is referred to as pose (p):
+                
+                p=[ x, y, 𝛳]
+                    x, y -> as expected
+                    𝛳 (theta) -> robots angle (rotation on z or yaw)
+                  (same as our absolute 2D degrees of freedom, 3!)
+
+            ● Without orientation (𝛳), we have location, not pose.
+            ● Note: In 3D space a robot would be represented by the
+                vector [x, y, z, pitch, roll, yaw]
+            
+            Constraints:
+                ● Our robot will be in a 2D plane
+                ● We will be using differential drive (Holonomic)
+                    ● Non-holonomic solutions (like Ackerman) are harder
+                ● Know the distance between the 2 drive wheels from
+                    the center point of the contact patches (b)
+                Inputs:
+                    ● In these calculations we will only be using wheel
+                        encoders for input:
+                    ● Sᵣ = Distance traveled by right wheel
+                    ● S_ (fill in) = Distance traveled by left wheels
+
+            - Mobile Kinematics (Odometry)
+                ● We will want to find:
+                    𝚫x, 𝚫y, 𝚫𝛳
+
+                ● We will start by determining 𝚫S (distance traveled by the
+                    center point of the robot between the wheels)
+                        𝚫S = (Sᵣ + S_)/2
+                    
+
+                ● Next we can determine 𝚫𝛳
+                    𝚫𝛳 = (Sᵣ - S_)/b
+
+                ● Once we have determined 𝚫S and 𝚫𝛳 we can use them
+                    to find 𝚫x and 𝚫y
+                        𝚫x = 𝚫S cos(𝛳 + 𝚫𝛳 / 2)
+                        𝚫y = 𝚫S sin(𝛳 + 𝚫𝛳 / 2)
+
+                - Problems
+                    ● Over short distances localization using odometry can be
+                        effective, but error usually compounds quickly. Long
+                        term localization using only this method is not effective.
+                    ● Using sensors to help ensure accurate readings and
+                        verify output (compass, accelerometer, gyroscope) in
+                        addition to encoders can help.
+
+                - Behavior Based Approach
+                    ● Behavior based strategies generally oppose the idea
+                        of maintaining and computing state such as location
+                    ● Instead the approach would be to create a set of
+                        behaviors that together result in the desired robot
+                        motion.
+                    ● Avoids explicit reasoning about localization and
+                        position and path planning as well.
+
+                    - Behavior Based Example:
+                        To navigate from room A to room B, a behavior based robot might:
+                            1. Use a left-wall following behavior
+                            2. A behavior to detect a unique property of room B such as carpet
+                            color.
+
+                        + Behavior Based Problems
+                            ● Method does not directly scale to other environments,
+                                or to large environments.
+                            ● Coding and debugging would be needed to move
+                                the robot to a new environment
+                            ● Underlying procedures such as left wall follow must be
+                                carefully designed to produce desired behavior
+                            ● Time consuming
+                            ● Heavily dependent on specific hardware / sensors
+                            ● Multiple behaviors may be at play depending on the
+                                situation, causing inaccuracies in the behavior
+                
+                - Map Based Localization
+                    ● Method does not directly scale to other environments,
+                      or to large environments.
+                        ● Coding and debugging would be needed to move
+                          the robot to a new environment
+                    ● Underlying procedures such as left wall follow must be
+                      carefully designed to produce desired behavior
+                        ● Time consuming
+                        ● Heavily dependent on specific hardware / sensors
+                    ● Multiple behaviors may be at play depending on the
+                        situation, causing inaccuracies in the behavior 
+                    ● In contrast to the behavior based approach, in the
+                        map-based approach the robot explicitly attempts to
+                        localize by collecting sensor data then updating some
+                        belief about its position with respect to a map of the
+                        environment.
+
+                        - Map Based Advantages
+                            ● System’s belief about position is available to be
+                                verified by humans on map
+                            ● The map is a medium that humans can use to give the
+                                robot goals.
+                            ● Humans can provide the robot with a new map if the
+                                environment changes or the robot enters a new
+                                environment.
+
+                        - Map Based Disadvantages
+                            ● More up-front development time is required
+                            ● If the model (map) deverges too much from reality
+                                (i.e., the map is wrong) the robot may act in an
+                                undesirable fashion. Even if sensor data is correct.
+
+7.2 Goals and Avoidance
+    ~ Getting Somewhere
+        ● Let’s assume that we have a robot moving through
+            space at a constant speed
+        ● If we want to change the robots direction, we need to
+            change the 𝛳 to move the robot in desired direction
+    
+    ~ The Solution We Know  
+        - So what are we going to supply as a value for 𝛳₂?
+        - We have a model location, a control input and a tracking
+            error (difference between our location and the goal
+            location)
+        - Sound familiar?
+        - Can we use a PID controller here?
+            Almost… but
+
+    ~ Radians and Angles
+        - Angles are not usable in a PID controller
+        - we need to keep the error between -ℼ and ℼ
+        - Standard solution is to use atan2 (which provides the
+            inverse tangent of 2 numbers as a function called atan2
+            (y,x) it is a way to produce angles between -ℼ and ℼ
+        - We feed atan2 the difference between our goal and
+            current x and y locations and it returns the angle in
+            radians we need to use to get to the goal x and y
+        - Once you account for this, a PID controller will work
+
+    ~ Determining Goal orientation
+        - Imagine that we are located at 1,1 and our goal is 50, 50.
+        - The difference in x and y between our current and goal x
+            and y location is 49, 49.
+        - Entering this into the atan2 calculator produces a result
+            of .7853... (which is the same as ℼ/4)
+
+    ~ Goal orientation  
+        Example usage:
+
+        atan2(Ygoal - y, Xgoal -x)
+
+        - Let’s say x = 3, y = 2 and the circle is Xgoal = 9, Ygoal = 25
+
+             atan(25 - 2, 9 - 3) result: 1.315613 radians
+
+        - If you want to convert to degrees: angle in radians * 180
+            degrees / pi
+
+        1.315613 * 180 / pi = 75.379 degrees!
+
+    ~ Getting to the Finish
+        ● So now that we have seen how to use the correct
+            mathematics to determine where we need to go, we
+            can feed our error (the difference between the
+            desired heading to reach the goal state, and our
+            current heading) into a PID controller.
+        ● Hint: To get started it is usually enough to start with
+            only the Proportional equation (P) once working and if
+            necessary (robot is oscillating, etc), add integral and
+            derivative. This will help keep the number of variables
+            that can cause issues to a minimum.
+
+    ~ Avoidance
+        ● Just like we did with our go to goal discussion we need
+            to identify a strategy for avoiding objects that lay in
+            the path of the robot
+
+    ~ Options
+        - We could:
+            ● Head directly away (add or subtract ℼ)
+            ● Head in a perpendicular fashion relative to the
+                object (either +ℼ/2 or -ℼ/2)
+            ● Determine if the object is really “in the way” of the
+                robot and possibly ignore it.
+            ● Maybe we can somehow combine the desired goal
+                and the need to avoid the obstacle. 
+
+    ~ Pure vs Blended Avoidance
+        - Pure obstacle avoidance:
+        - We do not take take goal or other behaviors into
+            account. Option 1, heading directly away from the
+            goal is an example of this
+
+        - Blending avoidance:
+            We take the goal or other behaviors into account. In
+                option 2, whether we choose to +ℼ/2 or -ℼ/2 from the
+                obstacle is important because one choice will bring us
+                closer to the goal, while one will bring us further away.
+
+            + There are benefits to both approaches
+                ● Pure methods
+                    ● You can do the best job at the thing you are working
+                        on directly, no distractions
+                    ● Easier system to build
+
+                ● Blended methods
+                    ● When you have worry about more than one thing
+                        you really need to blend behaviors
+                    ● Harder system to build
+                    ● We are going to working with this approach
+                
+                - Avoidance Methods 
+                    ● Avoiding objects can be treated much like the
+                        methods we talked about in “go to goal” except the
+                        obstacle represents a direction to avoid rather than
+                        one to head towards.
+                    ● You will have to decide if your robot is going to
+                        attempt to combine avoiding a behavior with avoiding
+                        a goal or if there will be “hard stops” that switch
+                        between the behaviors
+
+7.3 Potential Field Path planning
+
+    ~ What it is
+        ● Potential Field path planning creates a field, or
+          gradient across the robots map that directs the robot
+          to a goal position.
+            ● The goal is an attractive force that “pulls” the robot
+              towards it.
+            ● Obstacles are repulsive forces that “push” the robot
+              away.
+        ● Potential field approaches are more then just path
+            planning, it is also the control mechanism for the
+            robot, assuming the robot can localize it’s position on
+            a map in respect to the potential field, it can always
+            determine it’s next action.
+
+    ~ Always Once
+        - Potential Fields is intended to be “always on” it would
+            not work well in a “sometimes on” situation such as we
+            worked with with subsumption.
+        - We will also want to maintain some state (Robot, goal
+            and obstacle positions on a map)
+        - Remember that Behavioral reactive approaches allowed
+            some state to be maintained and an algorithmic /
+            versatile approach to choosing / combining behaviors.
+
+    ~ Combining forces  
+        ● Note that the goal has attractive effect across entire map
+        ● Obstacle (in green) only affects immediate area.
+        ● The robot can be influenced by the goal and 1 or more objects
+            simultaneously 
+
+    ~ Getting to the Goal (orientation)
+        Let’s start with the F (Goal attraction) in Potential Fields
+            ● We already know how to get the angle to the goal!
+              (see 7.1 and 7.2)
+
+                ● Finding 𝚫x, 𝚫y, 𝚫𝛳
+                ● Apply atan2 to make sure you can locate the goal
+                    in the correct quadrant!
+
+            ● Now we just need magnitude (distance) to the goal!
+
+                𝚫𝛳 = (Sᵣ - S_)/B 𝚫x = 𝚫S cos(𝛳 + 𝚫𝛳 / 2)
+                B 𝚫y = 𝚫S sin(𝛳 + 𝚫𝛳 / 2)
+                atan2(Ygoal - y, Xgoal -x)
+
+        ~ Getting to the Goal (distance)
+            ● Now that we have our goal orientation (output of the
+                atan2 function), we can use it to turn towards our goal
+            ● Using this with a quadratic function to determine
+                distance allows us to combine our goal orientation and
+                distance and represent the goal as 0 and distances
+                further away from the goal get larger.
+            ● Multiplying by a constant will increase the slope.
+                (Proportional Control)
+            ● If p(x1, y1) is our current location and q(xg, yg) is the
+                goal location: 
+
+                d = sqrt( (x[sub G] - x)^2 + (y - y[sub G])^2 )
+
+        - These 2 approaches can work together, providing
+            distance and angle.
+        - You can optionally use the distance to slow the robot
+            as you approach the goal so you do not overshoot.
+    
+        - Avoiding Obstacles
+            ● If you have a map of the environment, or know the x,y
+                location of an obstacle you can create a repulsive field
+                in much the same way
+            ● But.. what do we actually know?
+            ● We do not have the map, we have the information
+                we would have extracted from the map! The angle to
+                obstacle from robot and distance! (Yay us!)
+            ● One method of introducing the effect of the repulsive
+                force on robots path is use
+            ● The distance to determine magnitude
+            ● The angle to determine direction
+            ● Sum all forces with the output of the goal force to
+                achieve final orientation or motor output. (End result
+                is the same)
+
+            - Things to consider in your solution:
+                ● Distance to object will have influence on magnitude
+                ● Orientation may have influence on magnitude
+                ● The more angles your are considering the more fluid
+                    your robots response.
+                ● Each iteration through your algorithm should consider
+                    all the “latest” data, not just the data collected at that
+                    particular time.
+                ● Forces can push from multiple directions, if you have 2
+                    obstacles equidistant and at the same angles from the
+                    robot on opposite sides the robot should go straight
+                    (assuming no goals or other fields acting on the robot) 
+
+            - Possible solutions:
+                ● Separate threads to collect data and manage robot
+                    movement that share access to a data structure which
+                    stores all “latest” obstacle data points.
+                ● Every team will have access to 2 ultrasonic sensors, but
+                    might want to consider solutions that include
+                    additional sensors types and using a servo to move the
+                    sensor.
+    ~ The Sum of our parts
+        - Remember, the output of potential field is the result of
+            summing the attractive and repulsive fields.
+        - The fields act on the robot by changing the output to the
+            left and right actuators in our holonomic differential
+            drive robot designs. 
+
+    ~ Goal influence
+        - If a goal is 20 degrees to the right of the robot the
+            output of the goal (desired theta - current theta) would
+            slow the right actuator and speed up the left (the
+            amount would be proportional to the difference)
+
+    ~ Obstacle influence
+        - All of the obstacles then individually influence the
+            output to the actuators as well. Each affecting actuator
+            output proportional to its own magnitude.
+        - Summing all with the goal results in the robot taking the
+            optimal path
+
+        - Tuning is the key!
+            ● You get to decide the strength of the goals pull and
+                obstacles pushes!
+            ● This balance is what makes your robot look natural and
+                be successful!
+
+    ~ Problem: Local minima
+        ● A local minima is an area that becomes a localized goal
+        ● Concave objects will often present this challenge
+        ● A strategy needs to be in place to get out!
+
+8 Planning with A*
+
+    ~ Navigation Compentence    
+        - Given knowledge about the environment and a goal
+            position or series of goal positions, navigation
+        - competence is the ability of the robot to act to reach its
+            goals as efficiently and reliably as possible.
+
+    ~ Path Planning
+        ● We focused on localizing our robot and finding a way
+            to goals while avoiding obstacles in 7.1, 7.2 and 7.3.
+        ● Now that we can avoid crashing into things, and we
+            can move towards a destination, let’s consider how we
+            can add a deliberative planning ability to create a
+            hybrid robot architecture
+        - Path Planning involves identifying a trajectory that will
+            cause the robot to reach the goal location when
+            executed.
+
+    ~ Completeness
+        - A robot system is complete if for all possible problems
+            (goals) when there exists a trajectory to the goal, the
+            system will achieve the goal
+        ● An incomplete system when there is at least 1 example
+            where the system fails to find a possible solution and
+            achieve the goal.
+        ● Ex: Local minima (potential fields) 
+
+    ~ Deterministic Graph Search
+        ● If we convert our environment into a connectivity
+            graph (AMR 6.3.1.1) we know want to be able to find
+            the best path between the start and the goal
+        ● Our graphs collection of nodes or vertices and edges.
+
+    ~ Dijkstra's Algorithm
+        - Dijkstra’s Algorithm is similar to a breadth first
+            algorithm, except that we can guarantee the solution
+            is optimal by including edge costs.
+        - For each vertex we will keep track of the shortest
+            distance from the start and the previous vertex
+            along the shortest path.
+        - We will also track visited and unvisited vertices
+
+    ~ A*
+        ● Similar to Dijkstra’s Algorithm, but includes a Heuristic
+            function
+        ● Makes the algorithm especially efficient for single
+            node queries
+        ● Heuristic is often distance between current and goal
+            vertices in the absence of obstacles.  
+
+        - A* vs. Dijkstra
+            ● Dijkstra does not take direction into account when it is
+                deriving the correct path. So it will explore
+                possibilities that are in the completely wrong direction
+            ● A*’s Heuristic can tell us if we moving towards or away
+                from the goal.
+            ● The idea is that the heuristic tells us we are getting
+                closer and heading in the right direction.
+
+        - Optimal Path and A*
+            
